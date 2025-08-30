@@ -1,0 +1,13 @@
+name: Validate CSV Data
+on:
+  push: { paths: [ "raw/*.csv" ] }
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: CSV quick check
+        run: |
+          for f in raw/*.csv; do
+            echo "[CHECK] $f"; head -n 5 "$f" || true;
+          done

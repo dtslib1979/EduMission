@@ -1,0 +1,44 @@
+<!doctype html><html lang="ko"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EduMission — 로컬 시뮬레이터</title>
+<style>body{font-family:system-ui;max-width:980px;margin:32px auto;padding:0 16px;line-height:1.5}
+section{margin:18px 0;padding:16px;border:1px solid #eee;border-radius:12px}
+textarea{width:100%;min-height:120px;font-family:ui-monospace,Consolas,monospace}
+input,button{padding:8px;border:1px solid #ddd;border-radius:8px}</style>
+</head><body>
+<h1>EduMission — 입시·진로 전략 시뮬레이터 (오프라인)</h1>
+
+<section><h2>스토리 & 목표</h2>
+<label>목표 대학</label> <input id="target_univ" placeholder="A대학교">
+<label>목표 학과</label> <input id="target_dept" placeholder="컴퓨터공학과">
+<label>내 백분위</label> <input id="score_pct" type="number" step="0.1" placeholder="92"></section>
+
+<section><h2>CSV 붙여넣기</h2>
+<p>필수 스키마: population(year,cohort18) / quota(year,univ,dept,scheme,quota) / cutline(year,univ,dept,scheme,cut_pct,cut_std)</p>
+<label>population.csv</label><textarea id="csv_population">year,cohort18
+2024,455000
+2025,440000</textarea>
+<label>quota.csv</label><textarea id="csv_quota">year,univ,dept,scheme,quota
+2025,A대학교,컴퓨터공학,수능,120</textarea>
+<label>cutline.csv</label><textarea id="csv_cutline">year,univ,dept,scheme,cut_pct,cut_std
+2024,A대학교,컴퓨터공학,수능,91.5,520</textarea>
+</section>
+
+<section><h2>실행</h2>
+<button id="run">시뮬레이션 실행</button>
+<pre id="out"></pre>
+</section>
+
+<script src="../engine/edumission.js"></script>
+<script>
+document.getElementById('run').onclick = ()=>window.runEduMission({
+  target_univ: document.getElementById('target_univ').value,
+  target_dept: document.getElementById('target_dept').value,
+  score_pct: parseFloat(document.getElementById('score_pct').value||'0'),
+  csv_population: document.getElementById('csv_population').value,
+  csv_quota: document.getElementById('csv_quota').value,
+  csv_cutline: document.getElementById('csv_cutline').value,
+  outEl: document.getElementById('out')
+});
+</script>
+</body></html>

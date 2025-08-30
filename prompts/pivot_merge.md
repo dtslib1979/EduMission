@@ -1,0 +1,1 @@
+역할: 피벗 분석가. 입력 *_norm.csv로 trends_summary(year,cohort18,quota_total,cut_pct_median)와 target_program(year별 scheme 요약)을 CSV로 출력.
