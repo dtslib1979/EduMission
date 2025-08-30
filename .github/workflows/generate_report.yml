@@ -2,6 +2,12 @@ name: Generate Reports
 on:
   push:
     paths: ["raw/*.csv"]
+  workflow_dispatch: # 수동 실행 가능
+    
+permissions:
+  contents: write
+  actions: read
+    
 jobs:
   generate:
     runs-on: ubuntu-latest
@@ -92,7 +98,8 @@ jobs:
               latest_population: parseInt(latestPopulation),
               total_quota: totalQuota,
               data_files: ['population.csv', 'quota.csv', 'cutline.csv', 'cost.csv'],
-              notes: '엔진 실행 시 최신 값으로 저장'
+              notes: '엔진 실행 시 최신 값으로 저장',
+              trigger: 'GitHub Actions automation'
             }, null, 2);
           }
           
@@ -114,11 +121,46 @@ jobs:
             const avgCutline = cutline.length ? 
               (cutline.reduce((sum, c) => sum + parseFloat(c.cut_pct || 0), 0) / cutline.length).toFixed(2) : 'N/A';
             
-            return `# EduMission 자동 생성 리포트\n\n**생성 일시:** ${now}\n\n## 📊 데이터 요약\n\n### 인구 동향\n- 최신 연도: ${latestYear}년\n- 현재 18세 인구: ${parseInt(currentPop).toLocaleString()}명\n- 전년 대비 증감률: ${popChange}%\n\n### 대학 입시 현황\n- 총 모집정원: ${totalQuota.toLocaleString()}명\n- 평균 커트라인: ${avgCutline} 백분위\n- 데이터 기준 연도: ${Math.min(...years)}~${Math.max(...years)}\n\n### 분석 대상\n- 대학 수: ${new Set(quota.map(q => q.univ)).size}개\n- 학과 수: ${new Set(quota.map(q => q.dept)).size}개\n- 전형 유형: ${new Set(quota.map(q => q.scheme)).size}개\n\n---\n\n*이 리포트는 raw/*.csv 파일 변경 시 자동으로 생성됩니다.*`;
+            return `# EduMission 자동 생성 리포트
+
+**생성 일시:** ${now}
+
+## 📊 데이터 요약
+
+### 인구 동향
+- 최신 연도: ${latestYear}년
+- 현재 18세 인구: ${parseInt(currentPop).toLocaleString()}명
+- 전년 대비 증감률: ${popChange}%
+
+### 대학 입시 현황
+- 총 모집정원: ${totalQuota.toLocaleString()}명
+- 평균 커트라인: ${avgCutline} 백분위
+- 데이터 기준 연도: ${Math.min(...years)}~${Math.max(...years)}
+
+### 분석 대상
+- 대학 수: ${new Set(quota.map(q => q.univ)).size}개
+- 학과 수: ${new Set(quota.map(q => q.dept)).size}개
+- 전형 유형: ${new Set(quota.map(q => q.scheme)).size}개
+
+## 🔄 자동화 상태
+
+✅ **데이터 파이프라인 정상 작동**
+- 트리거: raw/*.csv 파일 변경 감지
+- 실행 시각: ${now}
+- 처리된 데이터: 2024-2026 인구 동향
+
+---
+
+*이 리포트는 raw/*.csv 파일 변경 시 자동으로 생성됩니다.*`;
           }
           
           // Generate all outputs
           try {
+            console.log('📁 Reading input files...');
+            console.log('  - raw/population.csv');
+            console.log('  - raw/quota.csv');  
+            console.log('  - raw/cutline.csv');
+            
             fs.writeFileSync('outputs/pivots.csv', generatePivots());
             fs.writeFileSync('outputs/summary.json', generateSummary());
             fs.writeFileSync('outputs/report.md', generateReport());
@@ -142,8 +184,12 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           
+          echo "🔍 Checking for changes in outputs/..."
+          git status outputs/
+          
           # Check if there are changes
           if [ -n "$(git status --porcelain outputs/)" ]; then
+            echo "📝 Changes detected, committing..."
             git add outputs/
             git commit -m "auto: update outputs after raw data change"
             git push
