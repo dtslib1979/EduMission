@@ -1,0 +1,815 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SceneStealer Engine</title>
+  <style>
+    /* ===== CSS Variables & Theme System ===== */
+    :root {
+      --primary: #2563eb;
+      --primary-light: #3b82f6;
+      --primary-dark: #1d4ed8;
+      --accent: #7c3aed;
+      --accent-light: #8b5cf6;
+      --background: #ffffff;
+      --surface: #f8fafc;
+      --surface-dark: #e2e8f0;
+      --text: #0f172a;
+      --text-light: #64748b;
+      --text-muted: #94a3b8;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+
+    [data-theme="dark"] {
+      --primary: #3b82f6;
+      --primary-light: #60a5fa;
+      --primary-dark: #2563eb;
+      --accent: #8b5cf6;
+      --accent-light: #a78bfa;
+      --background: #0f172a;
+      --surface: #1e293b;
+      --surface-dark: #334155;
+      --text: #f8fafc;
+      --text-light: #cbd5e1;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --error: #f87171;
+    }
+
+    /* ===== Reset & Base Styles ===== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
+      line-height: 1.5;
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    /* ===== Layout Components ===== */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .header {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .main {
+      padding: 2rem 0;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 4rem 0;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: white;
+      border-radius: 1rem;
+      margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+    }
+
+    .hero p {
+      font-size: 1.25rem;
+      opacity: 0.9;
+      max-width: 600px;
+      margin: 0 auto 2rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.75rem;
+      background-color: rgba(255, 255, 255, 0.2);
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    /* ===== Sections System ===== */
+    .sections {
+      display: grid;
+      gap: 2rem;
+    }
+
+    .section {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      transition: all 0.2s;
+    }
+
+    .section:hover {
+      box-shadow: var(--shadow-lg);
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .section-toggle {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 0.25rem;
+      transition: color 0.2s;
+    }
+
+    .section-toggle:hover {
+      color: var(--text);
+    }
+
+    .section-content {
+      transition: all 0.3s ease;
+    }
+
+    .section-content.collapsed {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      margin: 0;
+    }
+
+    /* ===== Form Elements ===== */
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .form-input,
+    .form-textarea,
+    .form-select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+      background-color: var(--background);
+      color: var(--text);
+      font-size: 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus,
+    .form-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .form-textarea {
+      min-height: 120px;
+      resize: vertical;
+      font-family: ui-monospace, 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+    }
+
+    /* ===== Buttons ===== */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-dark);
+    }
+
+    .btn-secondary {
+      background-color: var(--surface-dark);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--border);
+    }
+
+    .btn-icon {
+      padding: 0.5rem;
+    }
+
+    /* ===== Utilities ===== */
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    }
+
+    .flex {
+      display: flex;
+    }
+
+    .items-center {
+      align-items: center;
+    }
+
+    .justify-between {
+      justify-content: space-between;
+    }
+
+    .gap-2 {
+      gap: 0.5rem;
+    }
+
+    .gap-4 {
+      gap: 1rem;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .text-sm {
+      font-size: 0.875rem;
+    }
+
+    .text-muted {
+      color: var(--text-muted);
+    }
+
+    .mt-4 {
+      margin-top: 1rem;
+    }
+
+    .mb-4 {
+      margin-bottom: 1rem;
+    }
+
+    /* ===== Export Panel ===== */
+    .export-panel {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 400px;
+      height: 100vh;
+      background-color: var(--surface);
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow-lg);
+      transition: right 0.3s;
+      z-index: 200;
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+
+    .export-panel.open {
+      right: 0;
+    }
+
+    .export-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+      z-index: 150;
+    }
+
+    .export-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* ===== Responsive Design ===== */
+    @media (max-width: 768px) {
+      .header-content {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .hero h1 {
+        font-size: 2rem;
+      }
+
+      .hero p {
+        font-size: 1rem;
+      }
+
+      .export-panel {
+        width: 100%;
+        right: -100%;
+      }
+
+      .grid-2 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ===== Accessibility ===== */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    /* ===== Print Styles ===== */
+    @media print {
+      .header-actions,
+      .export-panel,
+      .section-toggle {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="export-overlay" id="exportOverlay"></div>
+
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <a href="#" class="logo">🎬 SceneStealer Engine</a>
+        <div class="header-actions">
+          <button class="btn btn-icon" id="themeToggle" aria-label="Toggle theme">
+            <span id="themeIcon">🌙</span>
+          </button>
+          <button class="btn btn-secondary" id="exportBtn">
+            Export
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="container">
+      <div class="hero">
+        <span class="badge">Repository = App Template</span>
+        <h1>SceneStealer Engine</h1>
+        <p>A lightweight, fork-and-edit web app template for creating customizable static sites with GitHub Pages deployment.</p>
+      </div>
+
+      <div class="sections" id="sections">
+        <!-- Content Management Section -->
+        <section class="section" data-section="content">
+          <div class="section-header">
+            <h2 class="section-title">📝 Content Management</h2>
+            <button class="section-toggle" aria-label="Toggle section">▼</button>
+          </div>
+          <div class="section-content">
+            <div class="grid grid-2">
+              <div class="form-group">
+                <label class="form-label" for="siteTitle">Site Title</label>
+                <input type="text" id="siteTitle" class="form-input" value="SceneStealer Engine" placeholder="Enter site title">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="siteSubtitle">Subtitle</label>
+                <input type="text" id="siteSubtitle" class="form-input" value="Static App Template" placeholder="Enter subtitle">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="siteDescription">Description</label>
+              <textarea id="siteDescription" class="form-textarea" placeholder="Enter site description">A lightweight, fork-and-edit web app template for creating customizable static sites with GitHub Pages deployment.</textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- Theme Configuration Section -->
+        <section class="section" data-section="theme">
+          <div class="section-header">
+            <h2 class="section-title">🎨 Theme Configuration</h2>
+            <button class="section-toggle" aria-label="Toggle section">▼</button>
+          </div>
+          <div class="section-content">
+            <div class="grid grid-2">
+              <div class="form-group">
+                <label class="form-label" for="primaryColor">Primary Color</label>
+                <input type="color" id="primaryColor" class="form-input" value="#2563eb">
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="accentColor">Accent Color</label>
+                <input type="color" id="accentColor" class="form-input" value="#7c3aed">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="fontFamily">Font Family</label>
+              <select id="fontFamily" class="form-select">
+                <option value="system">System Default</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Monospace</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="section" data-section="features">
+          <div class="section-header">
+            <h2 class="section-title">⚡ Features</h2>
+            <button class="section-toggle" aria-label="Toggle section">▼</button>
+          </div>
+          <div class="section-content">
+            <div class="grid">
+              <div>
+                <h3>🔥 Core Features</h3>
+                <ul>
+                  <li>✅ Fully static (no external APIs)</li>
+                  <li>✅ Theme tokens with dark/light mode</li>
+                  <li>✅ Section toggles for content management</li>
+                  <li>✅ Export to JSON and copy HTML</li>
+                  <li>✅ Mobile responsive design</li>
+                  <li>✅ Accessibility helpers</li>
+                  <li>✅ GitHub Pages auto-deployment</li>
+                </ul>
+              </div>
+              <div>
+                <h3>🛠 Technical Stack</h3>
+                <ul>
+                  <li>Pure HTML/CSS/JS</li>
+                  <li>CSS Custom Properties</li>
+                  <li>Flexbox & Grid Layout</li>
+                  <li>Local Storage API</li>
+                  <li>GitHub Actions Workflow</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Data Management Section -->
+        <section class="section" data-section="data">
+          <div class="section-header">
+            <h2 class="section-title">💾 Data Management</h2>
+            <button class="section-toggle" aria-label="Toggle section">▼</button>
+          </div>
+          <div class="section-content">
+            <div class="form-group">
+              <label class="form-label" for="jsonData">JSON Configuration</label>
+              <textarea id="jsonData" class="form-textarea" placeholder='{"key": "value"}'>{
+  "author": "SceneStealer Engine",
+  "version": "1.0.0",
+  "features": {
+    "static": true,
+    "responsive": true,
+    "accessible": true
+  }
+}</textarea>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button class="btn btn-primary" id="saveData">💾 Save to Local Storage</button>
+              <button class="btn btn-secondary" id="loadData">📂 Load from Local Storage</button>
+              <button class="btn btn-secondary" id="clearData">🗑️ Clear Data</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Usage Instructions Section -->
+        <section class="section" data-section="usage">
+          <div class="section-header">
+            <h2 class="section-title">📖 Usage Instructions</h2>
+            <button class="section-toggle" aria-label="Toggle section">▼</button>
+          </div>
+          <div class="section-content">
+            <div class="grid">
+              <div>
+                <h3>🚀 Quick Start</h3>
+                <ol>
+                  <li><strong>Fork</strong> this repository</li>
+                  <li>Enable <strong>GitHub Pages</strong> in Settings</li>
+                  <li>Edit <code>index.html</code> to customize</li>
+                  <li><strong>Commit & push</strong> to deploy</li>
+                </ol>
+              </div>
+              <div>
+                <h3>🔧 Customization</h3>
+                <ul>
+                  <li>Modify CSS variables for theming</li>
+                  <li>Add/remove sections as needed</li>
+                  <li>Update content in HTML</li>
+                  <li>Extend JavaScript functionality</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Export Panel -->
+  <div class="export-panel" id="exportPanel">
+    <div class="flex justify-between items-center mb-4">
+      <h2>Export Options</h2>
+      <button class="btn btn-icon" id="closeExport" aria-label="Close export panel">✕</button>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Export Format</label>
+      <div class="flex gap-2">
+        <button class="btn btn-primary" id="exportJson">📄 Export JSON</button>
+        <button class="btn btn-secondary" id="copyHtml">📋 Copy HTML</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="exportOutput">Output</label>
+      <textarea id="exportOutput" class="form-textarea" readonly style="height: 300px;"></textarea>
+    </div>
+
+    <div class="text-center mt-4">
+      <p class="text-sm text-muted">Export your configuration or copy the current HTML structure for backup or migration.</p>
+    </div>
+  </div>
+
+  <script>
+    // ===== Theme System =====
+    const themeToggle = document.getElementById('themeToggle');
+    const themeIcon = document.getElementById('themeIcon');
+    const html = document.documentElement;
+
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    html.setAttribute('data-theme', currentTheme);
+    themeIcon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+
+    themeToggle.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', currentTheme);
+      localStorage.setItem('theme', currentTheme);
+      themeIcon.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+    });
+
+    // ===== Section Toggle System =====
+    const sections = document.querySelectorAll('.section');
+    
+    sections.forEach(section => {
+      const toggle = section.querySelector('.section-toggle');
+      const content = section.querySelector('.section-content');
+      
+      toggle.addEventListener('click', () => {
+        const isCollapsed = content.classList.contains('collapsed');
+        
+        if (isCollapsed) {
+          content.classList.remove('collapsed');
+          toggle.textContent = '▼';
+          toggle.setAttribute('aria-expanded', 'true');
+        } else {
+          content.classList.add('collapsed');
+          toggle.textContent = '▶';
+          toggle.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+
+    // ===== Export System =====
+    const exportBtn = document.getElementById('exportBtn');
+    const exportPanel = document.getElementById('exportPanel');
+    const exportOverlay = document.getElementById('exportOverlay');
+    const closeExport = document.getElementById('closeExport');
+    const exportJson = document.getElementById('exportJson');
+    const copyHtml = document.getElementById('copyHtml');
+    const exportOutput = document.getElementById('exportOutput');
+
+    function openExportPanel() {
+      exportPanel.classList.add('open');
+      exportOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeExportPanel() {
+      exportPanel.classList.remove('open');
+      exportOverlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    exportBtn.addEventListener('click', openExportPanel);
+    closeExport.addEventListener('click', closeExportPanel);
+    exportOverlay.addEventListener('click', closeExportPanel);
+
+    // Export JSON configuration
+    exportJson.addEventListener('click', () => {
+      const config = {
+        theme: {
+          current: currentTheme,
+          primaryColor: document.getElementById('primaryColor').value,
+          accentColor: document.getElementById('accentColor').value,
+          fontFamily: document.getElementById('fontFamily').value
+        },
+        content: {
+          title: document.getElementById('siteTitle').value,
+          subtitle: document.getElementById('siteSubtitle').value,
+          description: document.getElementById('siteDescription').value
+        },
+        data: (() => {
+          try {
+            return JSON.parse(document.getElementById('jsonData').value);
+          } catch {
+            return {};
+          }
+        })(),
+        sections: Array.from(sections).map(section => ({
+          id: section.dataset.section,
+          collapsed: section.querySelector('.section-content').classList.contains('collapsed')
+        })),
+        timestamp: new Date().toISOString()
+      };
+      
+      exportOutput.value = JSON.stringify(config, null, 2);
+    });
+
+    // Copy HTML
+    copyHtml.addEventListener('click', () => {
+      exportOutput.value = document.documentElement.outerHTML;
+      
+      // Also copy to clipboard
+      navigator.clipboard.writeText(document.documentElement.outerHTML).then(() => {
+        const originalText = copyHtml.textContent;
+        copyHtml.textContent = '✅ Copied!';
+        setTimeout(() => {
+          copyHtml.textContent = originalText;
+        }, 2000);
+      });
+    });
+
+    // ===== Data Management =====
+    const saveData = document.getElementById('saveData');
+    const loadData = document.getElementById('loadData');
+    const clearData = document.getElementById('clearData');
+    const jsonData = document.getElementById('jsonData');
+
+    saveData.addEventListener('click', () => {
+      try {
+        const data = JSON.parse(jsonData.value);
+        localStorage.setItem('scenestealer-data', JSON.stringify(data));
+        
+        const originalText = saveData.textContent;
+        saveData.textContent = '✅ Saved!';
+        setTimeout(() => {
+          saveData.textContent = originalText;
+        }, 2000);
+      } catch (error) {
+        alert('Invalid JSON format');
+      }
+    });
+
+    loadData.addEventListener('click', () => {
+      const data = localStorage.getItem('scenestealer-data');
+      if (data) {
+        jsonData.value = JSON.stringify(JSON.parse(data), null, 2);
+        
+        const originalText = loadData.textContent;
+        loadData.textContent = '✅ Loaded!';
+        setTimeout(() => {
+          loadData.textContent = originalText;
+        }, 2000);
+      } else {
+        alert('No saved data found');
+      }
+    });
+
+    clearData.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear all data?')) {
+        localStorage.removeItem('scenestealer-data');
+        jsonData.value = '{}';
+        
+        const originalText = clearData.textContent;
+        clearData.textContent = '✅ Cleared!';
+        setTimeout(() => {
+          clearData.textContent = originalText;
+        }, 2000);
+      }
+    });
+
+    // ===== Theme Token Updates =====
+    const primaryColor = document.getElementById('primaryColor');
+    const accentColor = document.getElementById('accentColor');
+    const fontFamily = document.getElementById('fontFamily');
+
+    primaryColor.addEventListener('input', (e) => {
+      document.documentElement.style.setProperty('--primary', e.target.value);
+    });
+
+    accentColor.addEventListener('input', (e) => {
+      document.documentElement.style.setProperty('--accent', e.target.value);
+    });
+
+    fontFamily.addEventListener('change', (e) => {
+      const fonts = {
+        system: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+        serif: 'Georgia, "Times New Roman", serif',
+        mono: 'ui-monospace, "SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace'
+      };
+      document.body.style.fontFamily = fonts[e.target.value];
+    });
+
+    // ===== Content Updates =====
+    const siteTitle = document.getElementById('siteTitle');
+    const siteSubtitle = document.getElementById('siteSubtitle');
+
+    siteTitle.addEventListener('input', (e) => {
+      document.querySelector('.logo').textContent = `🎬 ${e.target.value}`;
+      document.querySelector('.hero h1').textContent = e.target.value;
+      document.title = e.target.value;
+    });
+
+    siteSubtitle.addEventListener('input', (e) => {
+      document.querySelector('.badge').textContent = e.target.value;
+    });
+
+    // ===== Keyboard Accessibility =====
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && exportPanel.classList.contains('open')) {
+        closeExportPanel();
+      }
+    });
+
+    // ===== Initialize =====
+    console.log('🎬 SceneStealer Engine initialized');
+    console.log('Fork this repo and customize to create your own static app!');
+  </script>
+</body>
+</html>
